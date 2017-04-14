@@ -25,6 +25,7 @@
 #include <glib-object.h>
 
 #include <gtk/gtk.h>
+#include "net-connection-editor.h"
 #include "ce-page.h"
 
 G_BEGIN_DECLS
@@ -43,8 +44,7 @@ struct _CEPageDetails
 {
         CEPage parent;
 
-        NMDevice *device;
-        NMAccessPoint *ap;
+        NetConnectionEditor *editor;
 };
 
 struct _CEPageDetailsClass
@@ -54,10 +54,7 @@ struct _CEPageDetailsClass
 
 GType   ce_page_details_get_type (void);
 
-CEPage *ce_page_details_new      (NMConnection     *connection,
-                                  NMClient         *client,
-                                  NMDevice         *device,
-                                  NMAccessPoint    *ap);
+CEPage *ce_page_details_new      (NetConnectionEditor * editor);
 
 G_END_DECLS
 

@@ -28,6 +28,7 @@
 
 #include "../panel-common.h"
 #include "ce-page-details.h"
+#include "net-connection-editor.h"
 
 G_DEFINE_TYPE (CEPageDetails, ce_page_details, CE_TYPE_PAGE)
 
@@ -112,41 +113,63 @@ out:
 }
 
 static void
+all_user_changed (GtkToggleButton *b, CEPageDetails *page)
+{
+        gboolean all_users;
+        NMSettingConnection *sc;
+
+        sc = nm_connection_get_setting_connection (CE_PAGE (page)->connection);
+        all_users = gtk_toggle_button_get_active (b);
+
+        g_object_set (sc, "permissions", NULL, NULL);
+        if (!all_users)
+                nm_setting_connection_add_permission (sc, "user", g_get_user_name (), NULL);
+}
+
+static void
+forget_cb (GtkButton *button, CEPageDetails *page)
+{
+        net_connection_editor_forget (page->editor);
+}
+
+static void
 connect_details_page (CEPageDetails *page)
 {
         guint speed;
         guint strength;
         NMDeviceState state;
         NMAccessPoint *active_ap;
+        NMSettingConnection *sc;
         const gchar *str;
         gboolean device_is_active;
+        GtkWidget *widget;
 
-        if (NM_IS_DEVICE_WIFI (page->device))
-                active_ap = nm_device_wifi_get_active_access_point (NM_DEVICE_WIFI (page->device));
+        if (NM_IS_DEVICE_WIFI (page->editor->device))
+                active_ap = nm_device_wifi_get_active_access_point (NM_DEVICE_WIFI (page->editor->device));
         else
                 active_ap = NULL;
 
-        state = page->device ? nm_device_get_state (page->device) : NM_DEVICE_STATE_DISCONNECTED;
+        state = page->editor->device ? nm_device_get_state (page->editor->device) : NM_DEVICE_STATE_DISCONNECTED;
 
         device_is_active = FALSE;
         speed = 0;
-        if (active_ap && page->ap == active_ap && state != NM_DEVICE_STATE_UNAVAILABLE) {
+        if (active_ap && page->editor->ap == active_ap && state != NM_DEVICE_STATE_UNAVAILABLE) {
                 device_is_active = TRUE;
-                if (NM_IS_DEVICE_WIFI (page->device))
-                        speed = nm_device_wifi_get_bitrate (NM_DEVICE_WIFI (page->device)) / 1000;
-        } else if (page->device) {
+                if (NM_IS_DEVICE_WIFI (page->editor->device))
+                        speed = nm_device_wifi_get_bitrate (NM_DEVICE_WIFI (page->editor->device)) / 1000;
+        } else if (page->editor->device) {
                 NMActiveConnection *ac;
                 const gchar *p1, *p2;
 
-                ac = nm_device_get_active_connection (page->device);
+                ac = nm_device_get_active_connection (page->editor->device);
                 p1 = ac ? nm_active_connection_get_uuid (ac) : NULL;
                 p2 = nm_connection_get_uuid (CE_PAGE (page)->connection);
                 if (g_strcmp0 (p1, p2) == 0) {
                         device_is_active = TRUE;
-                        if (NM_IS_DEVICE_WIFI (page->device))
-                                speed = nm_device_wifi_get_bitrate (NM_DEVICE_WIFI (page->device)) / 1000;
-                        else if (NM_IS_DEVICE_ETHERNET (page->device))
-                                speed = nm_device_ethernet_get_speed (NM_DEVICE_ETHERNET (page->device));
+                        if (NM_IS_DEVICE_WIFI (page->editor->device))
+                                speed = nm_device_wifi_get_bitrate (NM_DEVICE_WIFI (page->editor->device)) / 1000;
+                        else if (NM_IS_DEVICE_ETHERNET (page->editor->device))
+                                speed = nm_device_ethernet_get_speed (NM_DEVICE_ETHERNET (page->editor->device));
                 }
         }
         if (speed > 0)
@@ -156,10 +179,10 @@ connect_details_page (CEPageDetails *page)
         panel_set_device_widget_details (CE_PAGE (page)->builder, "speed", str);
         g_clear_pointer (&str, g_free);
 
-        if (NM_IS_DEVICE_WIFI (page->device))
-                str = nm_device_wifi_get_hw_address (NM_DEVICE_WIFI (page->device));
-        else if (NM_IS_DEVICE_ETHERNET (page->device))
-                str = nm_device_ethernet_get_hw_address (NM_DEVICE_ETHERNET (page->device));
+        if (NM_IS_DEVICE_WIFI (page->editor->device))
+                str = nm_device_wifi_get_hw_address (NM_DEVICE_WIFI (page->editor->device));
+        else if (NM_IS_DEVICE_ETHERNET (page->editor->device))
+                str = nm_device_ethernet_get_hw_address (NM_DEVICE_ETHERNET (page->editor->device));
 
         panel_set_device_widget_details (CE_PAGE (page)->builder, "mac", str);
 
@@ -170,8 +193,8 @@ connect_details_page (CEPageDetails *page)
         g_clear_pointer (&str, g_free);
 
         strength = 0;
-        if (page->ap != NULL)
-                strength = nm_access_point_get_strength (page->ap);
+        if (page->editor->ap != NULL)
+                strength = nm_access_point_get_strength (page->editor->ap);
 
         if (strength <= 0)
                 str = NULL;
@@ -189,7 +212,7 @@ connect_details_page (CEPageDetails *page)
 
         /* set IP entries */
         if (device_is_active)
-                panel_set_device_widgets (CE_PAGE (page)->builder, page->device);
+                panel_set_device_widgets (CE_PAGE (page)->builder, page->editor->device);
         else
                 panel_unset_device_widgets (CE_PAGE (page)->builder);
 
@@ -198,6 +221,26 @@ connect_details_page (CEPageDetails *page)
         else
                 panel_set_device_widget_details (CE_PAGE (page)->builder, "last_used", NULL);
 
+        widget = GTK_WIDGET (gtk_builder_get_object (CE_PAGE (page)->builder, "button_forget"));
+        g_signal_connect (widget, "clicked", G_CALLBACK (forget_cb), page);
+        gtk_style_context_add_class (gtk_widget_get_style_context (widget),
+                                     "destructive-action");
+
+        widget = GTK_WIDGET (gtk_builder_get_object (CE_PAGE (page)->builder,
+                                                     "auto_connect_check"));
+        sc = nm_connection_get_setting_connection (CE_PAGE (page)->connection);
+        g_object_bind_property (sc, "autoconnect",
+                                widget, "active",
+                                G_BINDING_BIDIRECTIONAL | G_BINDING_SYNC_CREATE);
+        g_signal_connect_swapped (widget, "toggled", G_CALLBACK (ce_page_changed), page);
+
+        widget = GTK_WIDGET (gtk_builder_get_object (CE_PAGE (page)->builder,
+                                                     "all_user_check"));
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget),
+                                      nm_setting_connection_get_num_permissions (sc) == 0);
+        g_signal_connect (widget, "toggled",
+                          G_CALLBACK (all_user_changed), page);
+        g_signal_connect_swapped (widget, "toggled", G_CALLBACK (ce_page_changed), page);
 }
 
 static void
@@ -211,21 +254,17 @@ ce_page_details_class_init (CEPageDetailsClass *class)
 }
 
 CEPage *
-ce_page_details_new (NMConnection     *connection,
-                     NMClient         *client,
-                     NMDevice         *device,
-                     NMAccessPoint    *ap)
+ce_page_details_new (NetConnectionEditor *editor)
 {
         CEPageDetails *page;
 
         page = CE_PAGE_DETAILS (ce_page_new (CE_TYPE_PAGE_DETAILS,
-                                             connection,
-                                             client,
+                                             editor->connection,
+                                             editor->client,
                                              "/org/gnome/control-center/network/details-page.ui",
                                              _("Details")));
 
-        page->device = device;
-        page->ap = ap;
+        page->editor = editor;
 
         connect_details_page (page);
 

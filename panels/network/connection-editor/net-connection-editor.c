@@ -537,7 +537,7 @@ net_connection_editor_set_connection (NetConnectionEditor *editor,
         type = nm_setting_connection_get_connection_type (sc);
 
         if (!editor->is_new_connection)
-                add_page (editor, ce_page_details_new (editor->connection, editor->client, editor->device, editor->ap));
+                add_page (editor, ce_page_details_new (editor));
 
         if (strcmp (type, NM_SETTING_WIRELESS_SETTING_NAME) == 0)
                 add_page (editor, ce_page_security_new (editor->connection, editor->client));
