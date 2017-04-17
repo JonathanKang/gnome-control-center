@@ -10,6 +10,5 @@
     <file preprocess="xml-stripblanks">reset-page.ui</file>
     <file preprocess="xml-stripblanks">security-page.ui</file>
     <file preprocess="xml-stripblanks">vpn-page.ui</file>
-    <file preprocess="xml-stripblanks">wifi-page.ui</file>
   </gresource>
 </gresources>

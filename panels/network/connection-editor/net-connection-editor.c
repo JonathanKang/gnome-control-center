@@ -30,7 +30,6 @@
 #include "net-connection-editor.h"
 #include "net-connection-editor-resources.h"
 #include "ce-page-details.h"
-#include "ce-page-wifi.h"
 #include "ce-page-ip4.h"
 #include "ce-page-ip6.h"
 #include "ce-page-security.h"
@@ -544,8 +543,11 @@ net_connection_editor_set_connection (NetConnectionEditor *editor,
         else if (strcmp (type, NM_SETTING_WIRED_SETTING_NAME) == 0)
                 add_page (editor, ce_page_8021x_security_new (editor->connection, editor->client));
 
+        /* Don't add the "Identity" tab. Will remove these if conditions
+         * when the whole network panel redesign is done. */
         if (strcmp (type, NM_SETTING_WIRELESS_SETTING_NAME) == 0)
-                add_page (editor, ce_page_wifi_new (editor->connection, editor->client));
+        {
+        }
         else if (strcmp (type, NM_SETTING_WIRED_SETTING_NAME) == 0)
                 add_page (editor, ce_page_ethernet_new (editor->connection, editor->client));
         else if (strcmp (type, NM_SETTING_VPN_SETTING_NAME) == 0)

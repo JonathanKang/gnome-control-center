@@ -12,8 +12,6 @@ libconnection_editor_la_SOURCES = 		\
 	ce-page.c				\
 	ce-page-details.h			\
 	ce-page-details.c			\
-	ce-page-wifi.h				\
-	ce-page-wifi.c				\
 	ce-page-ip4.h				\
 	ce-page-ip4.c				\
 	ce-page-ip6.h				\
