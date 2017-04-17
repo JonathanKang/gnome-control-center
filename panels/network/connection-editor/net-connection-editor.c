@@ -33,7 +33,6 @@
 #include "ce-page-ip4.h"
 #include "ce-page-ip6.h"
 #include "ce-page-security.h"
-#include "ce-page-reset.h"
 #include "ce-page-ethernet.h"
 #include "ce-page-8021x-security.h"
 #include "ce-page-vpn.h"
@@ -560,9 +559,6 @@ net_connection_editor_set_connection (NetConnectionEditor *editor,
 
         add_page (editor, ce_page_ip4_new (editor->connection, editor->client));
         add_page (editor, ce_page_ip6_new (editor->connection, editor->client));
-
-        if (!editor->is_new_connection)
-                add_page (editor, ce_page_reset_new (editor->connection, editor->client, editor));
 
         pages = g_slist_copy (editor->initializing_pages);
         for (l = pages; l; l = l->next) {
