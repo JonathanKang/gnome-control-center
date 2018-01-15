@@ -95,17 +95,21 @@ struct _CcPanelClass
   const char  * (* get_help_uri)   (CcPanel *panel);
 
   GtkWidget *   (* get_title_widget) (CcPanel *panel);
+
+  CcPanelVisibility  (* get_visibility) (CcPanelClass *panel_class);
 };
 
-GType        cc_panel_get_type         (void);
+GType              cc_panel_get_type               (void);
 
-CcShell*     cc_panel_get_shell        (CcPanel     *panel);
+CcShell           *cc_panel_get_shell              (CcPanel      *panel);
 
-GPermission *cc_panel_get_permission   (CcPanel     *panel);
+GPermission       *cc_panel_get_permission         (CcPanel      *panel);
 
-const char  *cc_panel_get_help_uri     (CcPanel     *panel);
+const char        *cc_panel_get_help_uri           (CcPanel      *panel);
 
-GtkWidget   *cc_panel_get_title_widget (CcPanel     *panel);
+GtkWidget         *cc_panel_get_title_widget       (CcPanel      *panel);
+
+CcPanelVisibility  cc_panel_class_get_visibility   (CcPanelClass *panel_class);
 
 G_END_DECLS
 

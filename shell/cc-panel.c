@@ -291,3 +291,12 @@ cc_panel_get_title_widget (CcPanel *panel)
 
   return NULL;
 }
+
+CcPanelVisibility
+cc_panel_class_get_visibility (CcPanelClass *panel_class)
+{
+  if (panel_class->get_visibility)
+    return panel_class->get_visibility (panel_class);
+
+  return CC_PANEL_VISIBILITY_SHOW;
+}
