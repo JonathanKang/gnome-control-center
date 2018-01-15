@@ -50,6 +50,21 @@ typedef struct CcPanelPrivate CcPanelPrivate;
 typedef struct _CcPanel       CcPanel;
 typedef struct _CcPanelClass  CcPanelClass;
 
+/**
+ * CcPanelVisibility:
+ * @CC_PANEL_VISIBILITY_SHOW:
+ * @CC_PANEL_VISIBILITY_ONLY_SHOW_IN_SEARCH:
+ * @CC_PANEL_VISIBILITY_HIDE:
+ *
+ * Visibility of panels, to decide whether a panel should be visible or not.
+ */
+typedef enum
+{
+  CC_PANEL_VISIBILITY_SHOW,
+  CC_PANEL_VISIBILITY_ONLY_SHOW_IN_SEARCH,
+  CC_PANEL_VISIBILITY_HIDE
+} CcPanelVisibility;
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (CcPanel, g_object_unref)
 
 /* cc-shell.h requires CcPanel, so make sure it is defined first */
