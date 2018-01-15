@@ -60,7 +60,8 @@ void                 cc_panel_list_add_panel                     (CcPanelList   
                                                                   const gchar        *title,
                                                                   const gchar        *description,
                                                                   gchar             **keywords,
-                                                                  const gchar        *icon);
+                                                                  const gchar        *icon,
+                                                                  gboolean            only_in_search);
 
 void                 cc_panel_list_set_active_panel               (CcPanelList       *self,
                                                                    const gchar       *id);

@@ -255,7 +255,8 @@ static void
 cc_shell_model_init (CcShellModel *self)
 {
   GType types[] = {G_TYPE_STRING, G_TYPE_STRING, G_TYPE_APP_INFO, G_TYPE_STRING,
-                   G_TYPE_UINT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_ICON, G_TYPE_STRV};
+                   G_TYPE_UINT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_ICON,
+                   G_TYPE_STRV, G_TYPE_BOOLEAN};
 
   self->priv = cc_shell_model_get_instance_private (self);
 
@@ -295,16 +296,24 @@ get_casefolded_keywords (GAppInfo *appinfo)
 }
 
 void
-cc_shell_model_add_item (CcShellModel    *model,
-                         CcPanelCategory  category,
-                         GAppInfo        *appinfo,
-                         const char      *id)
+cc_shell_model_add_item (CcShellModel      *model,
+                         CcPanelCategory    category,
+                         GAppInfo          *appinfo,
+                         const char        *id,
+                         CcPanelVisibleFunc visible_func)
 {
   GIcon       *icon = g_app_info_get_icon (appinfo);
   const gchar *name = g_app_info_get_name (appinfo);
   const gchar *comment = g_app_info_get_description (appinfo);
   char **keywords;
   char *casefolded_name, *casefolded_description;
+
+  if (visible_func && visible_func (id) == CC_PANEL_VISIBILITY_HIDE)
+  {
+    g_debug ("Not loading panel '%s' because it refuses to be shown.", id);
+
+    return;
+  }
 
   casefolded_name = cc_util_normalize_casefold_and_unaccent (name);
   casefolded_description = cc_util_normalize_casefold_and_unaccent (comment);
@@ -320,6 +329,7 @@ cc_shell_model_add_item (CcShellModel    *model,
                                      COL_CASEFOLDED_DESCRIPTION, casefolded_description,
                                      COL_GICON, icon,
                                      COL_KEYWORDS, keywords,
+                                     COL_SEARCH, visible_func (id) == CC_PANEL_VISIBILITY_ONLY_SHOW_IN_SEARCH ? TRUE : FALSE,
                                      -1);
 
   g_free (casefolded_name);

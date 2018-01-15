@@ -870,7 +870,8 @@ cc_panel_list_add_panel (CcPanelList     *self,
                          const gchar     *title,
                          const gchar     *description,
                          gchar          **keywords,
-                         const gchar     *icon)
+                         const gchar     *icon,
+                         gboolean         only_in_search)
 {
   GtkWidget *listbox;
   RowData *data, *search_data;
@@ -896,6 +897,9 @@ cc_panel_list_add_panel (CcPanelList     *self,
     }
 
   gtk_container_add (GTK_CONTAINER (listbox), data->row);
+  /* hide the panel if it's only shown in search result */
+  if (only_in_search)
+    gtk_widget_hide (data->row);
 
   /* And add to the search listbox too */
   search_data = row_data_new (category, id, title, description, keywords, icon);

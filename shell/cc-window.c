@@ -254,6 +254,7 @@ setup_model (CcWindow *shell)
       g_autofree gchar *symbolic_icon = NULL;
       g_autofree GStrv keywords = NULL;
       const gchar *icon_name;
+      gboolean only_in_search;
 
       gtk_tree_model_get (model, &iter,
                           COL_CATEGORY, &category,
@@ -262,6 +263,7 @@ setup_model (CcWindow *shell)
                           COL_ID, &id,
                           COL_NAME, &name,
                           COL_KEYWORDS, &keywords,
+                          COL_SEARCH, &only_in_search,
                           -1);
 
       icon_name = get_icon_name_from_g_icon (icon);
@@ -273,7 +275,8 @@ setup_model (CcWindow *shell)
                                name,
                                description,
                                keywords,
-                               symbolic_icon);
+                               symbolic_icon,
+                               only_in_search);
 
       valid = gtk_tree_model_iter_next (model, &iter);
     }

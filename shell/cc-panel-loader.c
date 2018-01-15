@@ -157,6 +157,53 @@ parse_categories (GDesktopAppInfo *app)
   return retval;
 }
 
+#ifndef CC_PANEL_LOADER_NO_GTYPES
+
+static GType
+get_panel_type (const gchar *id)
+{
+  gint i;
+  GType (*get_type) (void);
+
+  for (i = 0; i < G_N_ELEMENTS (all_panels); i++)
+  {
+    if (g_strcmp0 (id, all_panels[i].name) == 0)
+    {
+      get_type = all_panels[i].get_type;
+      break;
+    }
+  }
+  g_return_val_if_fail (get_type != G_TYPE_INVALID, G_TYPE_INVALID);
+
+  return get_type ();
+}
+
+#endif /* CC_PANEL_LOADER_NO_GTYPES */
+
+static CcPanelVisibility
+panel_get_visibility (const gchar *id)
+{
+#ifndef CC_PANEL_LOADER_NO_GTYPES
+
+  CcPanelClass *panel_class;
+  CcPanelVisibility result;
+  GType panel_type;
+
+  panel_type = get_panel_type (id);
+  panel_class = g_type_class_ref (panel_type);
+  result = cc_panel_class_get_visibility (panel_class);
+
+  g_type_class_unref (panel_class);
+
+  return result;
+
+#else /* CC_PANEL_LOADER_NO_GTYPES */
+
+  return CC_PANEL_VISIBILITY_SHOW;
+
+#endif /* CC_PANEL_LOADER_NO_GTYPES */
+}
+
 void
 cc_panel_loader_fill_model (CcShellModel *model)
 {
@@ -186,7 +233,9 @@ cc_panel_loader_fill_model (CcShellModel *model)
       if (!g_desktop_app_info_get_show_in (app, NULL))
         continue;
 
-      cc_shell_model_add_item (model, category, G_APP_INFO (app), all_panels[i].name);
+      cc_shell_model_add_item (model, category,
+                               G_APP_INFO (app), all_panels[i].name,
+                               panel_get_visibility);
     }
 }
 

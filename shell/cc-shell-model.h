@@ -24,6 +24,8 @@
 
 #include <gtk/gtk.h>
 
+#include "cc-panel.h"
+
 G_BEGIN_DECLS
 
 #define CC_TYPE_SHELL_MODEL cc_shell_model_get_type()
@@ -62,6 +64,8 @@ typedef enum {
   CC_CATEGORY_LAST
 } CcPanelCategory;
 
+typedef CcPanelVisibility (*CcPanelVisibleFunc) (const gchar *id);
+
 enum
 {
   COL_NAME,
@@ -73,6 +77,7 @@ enum
   COL_CASEFOLDED_DESCRIPTION,
   COL_GICON,
   COL_KEYWORDS,
+  COL_SEARCH,
 
   N_COLS
 };
@@ -93,10 +98,11 @@ GType cc_shell_model_get_type (void) G_GNUC_CONST;
 
 CcShellModel *cc_shell_model_new (void);
 
-void cc_shell_model_add_item (CcShellModel   *model,
-                              CcPanelCategory category,
-                              GAppInfo       *appinfo,
-                              const char     *id);
+void cc_shell_model_add_item (CcShellModel      *model,
+                              CcPanelCategory    category,
+                              GAppInfo          *appinfo,
+                              const char        *id,
+                              CcPanelVisibleFunc visible_func);
 
 gboolean cc_shell_model_iter_matches_search (CcShellModel *model,
                                              GtkTreeIter  *iter,
