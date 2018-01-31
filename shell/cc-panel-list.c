@@ -58,6 +58,8 @@ struct _CcPanelList
   CcPanelListView     previous_view;
   CcPanelListView     view;
   GHashTable         *id_to_data;
+
+  GDBusProxy         *bluetooth_rfkill;
 };
 
 G_DEFINE_TYPE (CcPanelList, cc_panel_list, GTK_TYPE_STACK)
@@ -574,10 +576,54 @@ search_row_activated_cb (GtkWidget     *listbox,
 }
 
 static void
+on_bluetooth_changed (GDBusProxy *proxy,
+                       GVariant *changed_properties,
+                       GStrv invalidated_properties,
+                       CcPanelList *self)
+{
+  GVariant *v;
+  gboolean has_airplane_mode;
+
+  v = g_dbus_proxy_get_cached_property (self->bluetooth_rfkill, "BluetoothHasAirplaneMode");
+  has_airplane_mode = g_variant_get_boolean (v);
+  g_variant_unref (v);
+
+  if (has_airplane_mode == FALSE)
+  {
+    RowData *data;
+
+    g_print ("No Bluetooth available\n");
+
+    /* TODO: only set wifi as the active panel when bluetooth
+     * is selected currectly */
+    cc_panel_list_set_active_panel (self, "wifi");
+
+    data = g_hash_table_lookup (self->id_to_data, "bluetooth");
+    if (data != NULL && gtk_widget_is_visible (data->row))
+    {
+      gtk_widget_hide (data->row);
+    }
+  }
+  else
+  {
+    RowData *data;
+
+    g_print ("Bluetooth available\n");
+
+    data = g_hash_table_lookup (self->id_to_data, "bluetooth");
+    if (data != NULL && !gtk_widget_is_visible (data->row))
+    {
+      gtk_widget_show (data->row);
+    }
+  }
+}
+
+static void
 cc_panel_list_finalize (GObject *object)
 {
   CcPanelList *self = (CcPanelList *)object;
 
+  g_clear_object (&self->bluetooth_rfkill);
   g_clear_pointer (&self->search_query, g_free);
   g_clear_pointer (&self->id_to_data, g_hash_table_destroy);
 
@@ -752,6 +798,17 @@ cc_panel_list_init (CcPanelList *self)
                                 NULL);
 
   gtk_list_box_set_placeholder (GTK_LIST_BOX (self->search_listbox), self->empty_search_placeholder);
+
+  /* Bluetooth RFKill */
+  self->bluetooth_rfkill = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+                                                          G_DBUS_PROXY_FLAGS_NONE,
+                                                          NULL,
+                                                          "org.gnome.SettingsDaemon.Rfkill",
+                                                          "/org/gnome/SettingsDaemon/Rfkill",
+                                                          "org.gnome.SettingsDaemon.Rfkill",
+                                                          NULL, NULL);
+  g_signal_connect (self->bluetooth_rfkill, "g-properties-changed",
+                    G_CALLBACK (on_bluetooth_changed), self);
 }
 
 GtkWidget*
